@@ -10,13 +10,15 @@ module Bigrivercalc
       @client = Aws::CostExplorer::Client.new(region: region)
     end
 
-    def get_cost_and_usage(time_period: nil, granularity: "MONTHLY")
-      @client.get_cost_and_usage(
+    def get_cost_and_usage(time_period: nil, granularity: "MONTHLY", filter: nil)
+      params = {
         time_period: time_period || default_time_period,
         granularity: granularity,
         metrics: ["BlendedCost", "UnblendedCost"],
         group_by: [{ type: "DIMENSION", key: "SERVICE" }]
-      )
+      }
+      params[:filter] = filter if filter
+      @client.get_cost_and_usage(params)
     end
 
     private

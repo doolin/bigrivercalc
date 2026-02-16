@@ -1,8 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "bundler/setup"
+
 require "json"
 require "ostruct"
+require "optparse"
 require "bigrivercalc"
 
 # Stub mode: use fixture data for sanity check without AWS
@@ -26,20 +29,65 @@ def stub_response
   )
 end
 
-format_type = (ARGV.include?("--format") ? ARGV[ARGV.index("--format") + 1] : nil) || "markdown"
-stub = ARGV.include?("--stub")
-
-line_items = if stub
-  Bigrivercalc::BillingParser.new.parse(stub_response)
-else
-  Bigrivercalc.fetch_billing
+def parse_args
+  options = { format: "markdown", stub: false, account: nil, period: nil }
+  parser = OptionParser.new do |opts|
+    opts.banner = "Usage: bigrivercalc [options]"
+    opts.on("-f", "--format FORMAT", "Output format: markdown or terminal") { |v| options[:format] = v }
+    opts.on("--stub", "Use fixture data (no AWS call)") { options[:stub] = true }
+    opts.on("-a", "--account ID", "Filter by AWS account ID") { |v| options[:account] = v }
+    opts.on("-p", "--period PERIOD", "Time period: YYYY-MM, current, last-month") { |v| options[:period] = v }
+    opts.on("-h", "--help", "Show this help") do
+      puts opts
+      exit 0
+    end
+  end
+  parser.parse!
+  options
 end
 
-output = case format_type
-when "terminal"
-  Bigrivercalc.format_terminal(line_items)
-else
-  Bigrivercalc.format_markdown(line_items)
+def run
+  options = parse_args
+  format_type = options[:format]
+  stub = options[:stub]
+
+  time_period = Bigrivercalc::PeriodParser.parse(options[:period]) if options[:period]
+
+  line_items = if stub
+    Bigrivercalc::BillingParser.new.parse(stub_response)
+  else
+    Bigrivercalc.fetch_billing(time_period: time_period, account_id: options[:account])
+  end
+
+  if line_items.empty?
+    $stderr.puts "No billing data found for the specified period."
+    exit 1
+  end
+
+  period_label = line_items.first&.period || (time_period ? "#{time_period[:start]} to #{time_period[:end]}" : nil)
+  formatter_opts = { account_id: options[:account], period: period_label }
+
+  output = case format_type
+  when "terminal"
+    Bigrivercalc.format_terminal(line_items, **formatter_opts)
+  else
+    Bigrivercalc.format_markdown(line_items, **formatter_opts)
+  end
+
+  puts output
+  exit 0
+rescue Aws::Errors::MissingCredentialsError
+  $stderr.puts "Error: AWS credentials not found. Set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY or run `aws configure`."
+  exit 1
+rescue Aws::Errors::ServiceError => e
+  $stderr.puts "Error: #{e.message}"
+  exit 1
+rescue Bigrivercalc::Error => e
+  $stderr.puts "Error: #{e.message}"
+  exit 1
+rescue OptionParser::InvalidOption, OptionParser::MissingArgument => e
+  $stderr.puts "Error: #{e.message}"
+  exit 1
 end
 
-puts output
+run
