@@ -1,0 +1,35 @@
+{
+  "ResultsByTime": [
+    {
+      "TimePeriod": {
+        "Start": "2025-02-01",
+        "End": "2025-03-01"
+      },
+      "Total": {},
+      "Groups": [
+        {
+          "Keys": ["Amazon EC2"],
+          "Metrics": {
+            "BlendedCost": { "Amount": "12.50", "Unit": "USD" },
+            "UnblendedCost": { "Amount": "12.50", "Unit": "USD" }
+          }
+        },
+        {
+          "Keys": ["Amazon S3"],
+          "Metrics": {
+            "BlendedCost": { "Amount": "2.30", "Unit": "USD" },
+            "UnblendedCost": { "Amount": "2.30", "Unit": "USD" }
+          }
+        },
+        {
+          "Keys": ["NoSpend Service"],
+          "Metrics": {
+            "BlendedCost": { "Amount": "0", "Unit": "USD" },
+            "UnblendedCost": { "Amount": "0", "Unit": "USD" }
+          }
+        }
+      ],
+      "Estimated": false
+    }
+  ]
+}
