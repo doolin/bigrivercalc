@@ -1,5 +1,9 @@
 # Plan: AWS Billing Report Tool (bigrivercalc)
 
+**Status: Complete** (Feb 2025)
+
+---
+
 ## Overview
 
 Build a Ruby CLI that fetches AWS billing data via the Cost Explorer API, filters to non-zero amounts only, and outputs in Markdown (and optionally terminal-friendly) format.
@@ -138,3 +142,24 @@ bigrivercalc/
 - Cost data can lag by up to 24 hours.
 - `GetCostAndUsage` returns nested JSON; parsing will focus on `ResultsByTime` and `Groups`.
 - IAM: `ce:GetCostAndUsage` (and possibly `ce:GetDimensionValues`) on the relevant account.
+
+---
+
+## Future Work
+
+**Shipping**
+- Publish to RubyGems (`gem push`)
+- GitHub release and version tag
+
+**Features**
+- `--output FILE` – write to file instead of stdout
+- `--json` – machine-readable output format
+- More period formats (e.g. date ranges)
+- `--profile` – select AWS profile from CLI
+- `--output SQL`
+- `operate as a lambda`
+
+**Hardening**
+- CI (e.g. GitHub Actions) to run specs
+- Rakefile with `rake test` / `rake build`
+- RuboCop or other linter
