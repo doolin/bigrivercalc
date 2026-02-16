@@ -133,6 +133,7 @@ bigrivercalc/
 
 ## Notes
 
+- **CLI sanity check:** For each stage, ensure `bundle exec bin/bigrivercalc` (or equivalent) runs. Use `--stub` or mocks until AWS is hooked up.
 - Cost Explorer is in `us-east-1`; other regions may not work.
 - Cost data can lag by up to 24 hours.
 - `GetCostAndUsage` returns nested JSON; parsing will focus on `ResultsByTime` and `Groups`.

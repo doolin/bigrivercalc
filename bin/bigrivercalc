@@ -1,7 +1,45 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "json"
+require "ostruct"
 require "bigrivercalc"
 
-# TODO: Phase 4 - CLI options and integration
-puts "bigrivercalc #{Bigrivercalc::VERSION}"
+# Stub mode: use fixture data for sanity check without AWS
+def stub_response
+  fixture_path = File.expand_path("../spec/fixtures/sample_response.json", __dir__)
+  json = JSON.parse(File.read(fixture_path))
+  OpenStruct.new(
+    results_by_time: json["ResultsByTime"].map { |rbt|
+      OpenStruct.new(
+        time_period: OpenStruct.new(start: rbt["TimePeriod"]["Start"], end: rbt["TimePeriod"]["End"]),
+        total: rbt["Total"],
+        groups: (rbt["Groups"] || []).map { |g|
+          OpenStruct.new(
+            keys: g["Keys"],
+            metrics: (g["Metrics"] || {}).transform_values { |m| OpenStruct.new(amount: m["Amount"], unit: m["Unit"]) }
+          )
+        },
+        estimated: rbt["Estimated"]
+      )
+    }
+  )
+end
+
+format_type = (ARGV.include?("--format") ? ARGV[ARGV.index("--format") + 1] : nil) || "markdown"
+stub = ARGV.include?("--stub")
+
+line_items = if stub
+  Bigrivercalc::BillingParser.new.parse(stub_response)
+else
+  Bigrivercalc.fetch_billing
+end
+
+output = case format_type
+when "terminal"
+  Bigrivercalc.format_terminal(line_items)
+else
+  Bigrivercalc.format_markdown(line_items)
+end
+
+puts output
