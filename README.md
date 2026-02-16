@@ -25,14 +25,16 @@ gem install bigrivercalc-0.1.0.gem
 AWS credentials are read from:
 
 - Environment variables: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`
-- Or `~/.aws/credentials` (when using the AWS CLI profile)
+- Or `~/.aws/credentials` (when using the AWS CLI)
 
 Cost Explorer uses the `us-east-1` region.
 
 ## Usage
 
+Run directly (no `bundle exec` needed):
+
 ```bash
-bundle exec bin/bigrivercalc
+./bin/bigrivercalc
 ```
 
 Or when installed as a gem:
@@ -41,9 +43,65 @@ Or when installed as a gem:
 bigrivercalc
 ```
 
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `-f`, `--format FORMAT` | Output format: `markdown` or `terminal` (default: markdown) |
+| `--stub` | Use fixture data instead of calling AWS (for testing) |
+| `-a`, `--account ID` | Filter by AWS account ID |
+| `-p`, `--period PERIOD` | Time period: `YYYY-MM`, `current`, `last-month` |
+| `-h`, `--help` | Show help |
+
+### Examples
+
+```bash
+# Current month, markdown (default)
+./bin/bigrivercalc
+
+# Terminal format
+./bin/bigrivercalc --format terminal
+
+# Specific month
+./bin/bigrivercalc --period 2025-01
+
+# Filter by account
+./bin/bigrivercalc --account 123456789012
+
+# Sanity check without AWS credentials
+./bin/bigrivercalc --stub
+```
+
 ## IAM Permissions
 
-Your AWS credentials need:
+Your AWS credentials need the following permissions:
 
-- `ce:GetCostAndUsage`
-- `ce:GetDimensionValues` (optional)
+| Permission | Required | Description |
+|------------|----------|-------------|
+| `ce:GetCostAndUsage` | Yes | Retrieve cost and usage metrics |
+| `ce:GetDimensionValues` | No | Optional; used for dimension lookups |
+
+Example IAM policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ce:GetCostAndUsage"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+## Development
+
+```bash
+bundle install
+bundle exec rspec
+./bin/bigrivercalc --stub   # Sanity check
+```
