@@ -9,6 +9,7 @@
 *.rbc
 *.so
 /.config
+/coverage/
 
 # IDE
 .idea/

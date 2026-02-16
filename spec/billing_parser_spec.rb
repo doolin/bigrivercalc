@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "spec_helper"
 require "json"
 require "ostruct"
 require "bigrivercalc/billing_parser"
