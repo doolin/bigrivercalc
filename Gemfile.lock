@@ -3,6 +3,7 @@ PATH
   specs:
     bigrivercalc (0.1.0)
       aws-sdk-costexplorer (~> 1.0)
+      aws-sdk-organizations (~> 1.0)
       ostruct (~> 0.6)
 
 GEM
@@ -19,6 +20,9 @@ GEM
       jmespath (~> 1, >= 1.6.1)
       logger
     aws-sdk-costexplorer (1.147.0)
+      aws-sdk-core (~> 3, >= 3.241.4)
+      aws-sigv4 (~> 1.5)
+    aws-sdk-organizations (1.135.0)
       aws-sdk-core (~> 3, >= 3.241.4)
       aws-sigv4 (~> 1.5)
     aws-sigv4 (1.12.1)
@@ -64,6 +68,7 @@ CHECKSUMS
   aws-partitions (1.1214.0) sha256=347f2bc1e8e778db219072892450b8c63d0ffcf411be64bbc1831f9bcd694b1f
   aws-sdk-core (3.242.0) sha256=c17b3003acc78d80c1a8437b285a1cfc5e4d7749ce7821cf3071e847535a29a0
   aws-sdk-costexplorer (1.147.0) sha256=3af29c29fb709b9a256b57324a20b11f5e8e5bc60b8acfba8fdfabee5fd619d2
+  aws-sdk-organizations (1.135.0) sha256=d3db96208315ac8b8a8f9f4c4724e0aaf8aec9fcdaa653ad093023d62c60800b
   aws-sigv4 (1.12.1) sha256=6973ff95cb0fd0dc58ba26e90e9510a2219525d07620c8babeb70ef831826c00
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   bigdecimal (4.0.1) sha256=8b07d3d065a9f921c80ceaea7c9d4ae596697295b584c296fe599dd0ad01c4a7

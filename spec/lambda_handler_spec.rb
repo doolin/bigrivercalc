@@ -44,7 +44,15 @@ RSpec.describe Bigrivercalc::LambdaHandler do
       described_class.process(event: { "account_id" => "123456789012" })
 
       expect(Bigrivercalc).to have_received(:fetch_billing).with(
-        time_period: nil, account_id: "123456789012"
+        time_period: nil, account_id: "123456789012", ou_id: nil
+      )
+    end
+
+    it "passes ou_id to fetch_billing" do
+      described_class.process(event: { "ou_id" => "ou-abc-12345" })
+
+      expect(Bigrivercalc).to have_received(:fetch_billing).with(
+        time_period: nil, account_id: nil, ou_id: "ou-abc-12345"
       )
     end
 
@@ -53,7 +61,7 @@ RSpec.describe Bigrivercalc::LambdaHandler do
 
       expect(Bigrivercalc).to have_received(:fetch_billing).with(
         time_period: { start: "2025-01-01", end: "2025-02-01" },
-        account_id: nil
+        account_id: nil, ou_id: nil
       )
     end
 

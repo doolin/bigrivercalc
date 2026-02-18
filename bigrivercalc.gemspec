@@ -24,6 +24,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "aws-sdk-costexplorer", "~> 1.0"
+  spec.add_dependency "aws-sdk-organizations", "~> 1.0"
   spec.add_dependency "ostruct", "~> 0.6"
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "simplecov", "~> 0.22"

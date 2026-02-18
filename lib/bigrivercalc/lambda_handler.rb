@@ -7,13 +7,15 @@ module Bigrivercalc
     def self.process(event:, context: nil)
       format     = event["format"] || "markdown"
       account_id = event["account_id"]
+      ou_id      = event["ou_id"]
       period_str = event["period"]
 
       time_period = PeriodParser.parse(period_str) if period_str
 
       line_items = Bigrivercalc.fetch_billing(
         time_period: time_period,
-        account_id: account_id
+        account_id: account_id,
+        ou_id: ou_id
       )
 
       if line_items.empty?

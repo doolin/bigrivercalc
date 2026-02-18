@@ -30,12 +30,13 @@ def stub_response
 end
 
 def parse_args
-  options = { format: "markdown", stub: false, account: nil, period: nil }
+  options = { format: "markdown", stub: false, account: nil, ou: nil, period: nil }
   parser = OptionParser.new do |opts|
     opts.banner = "Usage: bigrivercalc [options]"
     opts.on("-f", "--format FORMAT", "Output format: markdown or terminal") { |v| options[:format] = v }
     opts.on("--stub", "Use fixture data (no AWS call)") { options[:stub] = true }
     opts.on("-a", "--account ID", "Filter by AWS account ID") { |v| options[:account] = v }
+    opts.on("--ou OU_ID", "Filter by AWS Organizations OU") { |v| options[:ou] = v }
     opts.on("-p", "--period PERIOD", "Time period: YYYY-MM, current, last-month") { |v| options[:period] = v }
     opts.on("-h", "--help", "Show this help") do
       puts opts
@@ -56,7 +57,7 @@ def run
   line_items = if stub
     Bigrivercalc::BillingParser.new.parse(stub_response)
   else
-    Bigrivercalc.fetch_billing(time_period: time_period, account_id: options[:account])
+    Bigrivercalc.fetch_billing(time_period: time_period, account_id: options[:account], ou_id: options[:ou])
   end
 
   if line_items.empty?
