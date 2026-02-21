@@ -151,15 +151,33 @@ bigrivercalc/
 - Publish to RubyGems (`gem push`)
 - GitHub release and version tag
 
-**Features**
+**High value, low effort**
+- `--json` – machine-readable output, pipeable to `jq` or dashboards
+- `--profile NAME` – select AWS profile from CLI (wraps `Aws.config[:profile]`)
+- `--daily` granularity – expose daily granularity for spotting cost spikes within a month
+
+**High value, moderate effort**
+- Cost deltas – compare two periods and show which services increased or decreased (API: `GetCostAndUsageComparisons`)
+- Scheduled Lambda + SNS/Slack – run on CloudWatch Events schedule, post report to Slack or email via SNS
+- Threshold alerts – `--warn-above 50` flag, exit code 2 when total exceeds threshold (useful in CI or cron)
+
+**Nice to have**
 - `--output FILE` – write to file instead of stdout
-- `--json` – machine-readable output format
-- More period formats (e.g. date ranges)
-- `--profile` – select AWS profile from CLI
-- `--output SQL`
-- `operate as a lambda`
+- `--csv` / `--sql` formatters – for import into spreadsheets or databases
+- Tag grouping – `--group-by TAG:Environment` to see costs split by tag instead of service
+- Caching – cache API response locally for a configurable TTL (data lags 24h anyway)
+- Multi-OU – accept multiple `--ou` flags and aggregate across several OUs
 
 **Hardening**
-- CI (e.g. GitHub Actions) to run specs
-- Rakefile with `rake test` / `rake build`
-- RuboCop or other linter
+- CI – GitHub Actions to run rspec + SimpleCov on push; fail if coverage drops
+- Rakefile – `rake spec`, `rake build`, `rake install` for standard gem workflow
+- RuboCop – enforce style consistency with `.rubocop.yml`
+- Integration tests with `Aws::ClientStubs` instead of OpenStruct mocks
+
+**Architecture**
+- Config file – `~/.bigrivercalc.yml` or `.bigrivercalc.yml` for defaults (account, OU, format, profile)
+- Plugin formatters – let users register custom formatters (e.g. HTML, PDF) without modifying the gem
+
+**Done**
+- ~~`operate as a lambda`~~ (`lambda_function.rb`, `lambda_handler.rb`)
+- ~~OU filtering~~ (`--ou`, `org_client.rb`)
