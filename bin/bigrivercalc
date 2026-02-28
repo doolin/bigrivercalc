@@ -30,13 +30,14 @@ def stub_response
 end
 
 def parse_args
-  options = { format: "markdown", stub: false, account: nil, ou: nil, period: nil }
+  options = { format: "markdown", stub: false, account: nil, ou: nil, all_ous: false, period: nil }
   parser = OptionParser.new do |opts|
     opts.banner = "Usage: bigrivercalc [options]"
     opts.on("-f", "--format FORMAT", "Output format: markdown or terminal") { |v| options[:format] = v }
     opts.on("--stub", "Use fixture data (no AWS call)") { options[:stub] = true }
     opts.on("-a", "--account ID", "Filter by AWS account ID") { |v| options[:account] = v }
     opts.on("--ou OU_ID", "Filter by AWS Organizations OU") { |v| options[:ou] = v }
+    opts.on("--all-ous", "Show billing for each OU under the root") { options[:all_ous] = true }
     opts.on("-p", "--period PERIOD", "Time period: YYYY-MM, current, last-month") { |v| options[:period] = v }
     opts.on("-h", "--help", "Show this help") do
       puts opts
@@ -54,25 +55,47 @@ def run
 
   time_period = Bigrivercalc::PeriodParser.parse(options[:period]) if options[:period]
 
-  line_items = if stub
-    Bigrivercalc::BillingParser.new.parse(stub_response)
-  else
-    Bigrivercalc.fetch_billing(time_period: time_period, account_id: options[:account], ou_id: options[:ou])
-  end
-
-  if line_items.empty?
-    $stderr.puts "No billing data found for the specified period."
+  if options[:all_ous] && (options[:account] || options[:ou])
+    $stderr.puts "Error: --all-ous cannot be combined with --account or --ou"
     exit 1
   end
 
-  period_label = line_items.first&.period || (time_period ? "#{time_period[:start]} to #{time_period[:end]}" : nil)
-  formatter_opts = { account_id: options[:account], period: period_label }
+  if options[:all_ous] && stub
+    $stderr.puts "Error: --all-ous is not supported with --stub"
+    exit 1
+  end
 
-  output = case format_type
-  when "terminal"
-    Bigrivercalc.format_terminal(line_items, **formatter_opts)
+  if options[:all_ous]
+    ou_results = Bigrivercalc.fetch_billing_by_ou(time_period: time_period)
+    period_label = time_period ? "#{time_period[:start]} to #{time_period[:end]}" : nil
+
+    output = case format_type
+    when "terminal"
+      Bigrivercalc.format_terminal_by_ou(ou_results, period: period_label)
+    else
+      Bigrivercalc.format_markdown_by_ou(ou_results, period: period_label)
+    end
   else
-    Bigrivercalc.format_markdown(line_items, **formatter_opts)
+    line_items = if stub
+      Bigrivercalc::BillingParser.new.parse(stub_response)
+    else
+      Bigrivercalc.fetch_billing(time_period: time_period, account_id: options[:account], ou_id: options[:ou])
+    end
+
+    if line_items.empty?
+      $stderr.puts "No billing data found for the specified period."
+      exit 1
+    end
+
+    period_label = line_items.first&.period || (time_period ? "#{time_period[:start]} to #{time_period[:end]}" : nil)
+    formatter_opts = { account_id: options[:account], period: period_label }
+
+    output = case format_type
+    when "terminal"
+      Bigrivercalc.format_terminal(line_items, **formatter_opts)
+    else
+      Bigrivercalc.format_markdown(line_items, **formatter_opts)
+    end
   end
 
   puts output

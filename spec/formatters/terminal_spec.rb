@@ -42,4 +42,41 @@ RSpec.describe Bigrivercalc::Formatters::Terminal do
       expect(output).to eq("")
     end
   end
+
+  describe "#format_by_ou" do
+    let(:ou_results) do
+      {
+        Bigrivercalc::OUInfo.new(id: "ou-abc1-11111111", name: "Engineering") => line_items,
+        Bigrivercalc::OUInfo.new(id: "ou-abc1-22222222", name: "Marketing") => []
+      }
+    end
+
+    it "includes a section for each OU" do
+      formatter = described_class.new(color: false)
+      output = formatter.format_by_ou(ou_results)
+      expect(output).to include("Engineering")
+      expect(output).to include("ou-abc1-11111111")
+      expect(output).to include("Marketing")
+      expect(output).to include("ou-abc1-22222222")
+    end
+
+    it "shows table for OUs with data" do
+      formatter = described_class.new(color: false)
+      output = formatter.format_by_ou(ou_results)
+      expect(output).to include("Amazon EC2")
+      expect(output).to include("12.50")
+    end
+
+    it "shows no-data message for empty OUs" do
+      formatter = described_class.new(color: false)
+      output = formatter.format_by_ou(ou_results)
+      expect(output).to include("no billing data")
+    end
+
+    it "includes grand total" do
+      formatter = described_class.new(color: false)
+      output = formatter.format_by_ou(ou_results)
+      expect(output).to include("Grand Total: 14.80")
+    end
+  end
 end

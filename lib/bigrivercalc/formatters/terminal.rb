@@ -18,6 +18,29 @@ module Bigrivercalc
         lines.compact.join("\n")
       end
 
+      def format_by_ou(ou_results, period: nil)
+        sections = []
+        sections << "Period: #{period}" if period
+
+        grand_total = 0.0
+        ou_results.each do |ou, line_items|
+          section = []
+          ou_total = line_items.sum { |i| i.amount.to_f }
+          grand_total += ou_total
+          section << "#{ou.name} (#{ou.id}) — #{sprintf('%.2f', ou_total)}"
+          section << "=" * section.last.length
+          if line_items.any?
+            section << table(line_items)
+          else
+            section << "(no billing data)"
+          end
+          sections << section.join("\n")
+        end
+
+        sections << "Grand Total: #{sprintf('%.2f', grand_total)}"
+        sections.compact.join("\n\n")
+      end
+
       private
 
       def header(account_id, period)

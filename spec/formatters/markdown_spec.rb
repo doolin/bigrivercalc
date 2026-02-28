@@ -37,4 +37,41 @@ RSpec.describe Bigrivercalc::Formatters::Markdown do
       expect(output).to eq("")
     end
   end
+
+  describe "#format_by_ou" do
+    let(:ou_results) do
+      {
+        Bigrivercalc::OUInfo.new(id: "ou-abc1-11111111", name: "Engineering") => line_items,
+        Bigrivercalc::OUInfo.new(id: "ou-abc1-22222222", name: "Marketing") => []
+      }
+    end
+
+    it "includes a section for each OU with name and ID" do
+      output = formatter.format_by_ou(ou_results)
+      expect(output).to include("Engineering")
+      expect(output).to include("ou-abc1-11111111")
+      expect(output).to include("Marketing")
+      expect(output).to include("ou-abc1-22222222")
+    end
+
+    it "shows billing table for OUs with data" do
+      output = formatter.format_by_ou(ou_results)
+      expect(output).to include("| Amazon EC2 | 12.50 | USD |")
+    end
+
+    it "shows no-data message for empty OUs" do
+      output = formatter.format_by_ou(ou_results)
+      expect(output).to include("No billing data")
+    end
+
+    it "includes grand total" do
+      output = formatter.format_by_ou(ou_results)
+      expect(output).to include("**Grand Total:** 14.80")
+    end
+
+    it "includes period when given" do
+      output = formatter.format_by_ou(ou_results, period: "Feb 2025")
+      expect(output).to include("**Period:** Feb 2025")
+    end
+  end
 end
