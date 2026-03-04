@@ -11,7 +11,7 @@ module Bigrivercalc
         period = format_period(result.time_period)
         (result.groups || []).each do |group|
           item = extract_line_item(group, period)
-          line_items << item if item && !zero_amount?(item.amount)
+          line_items << item if item
         end
       end
 
@@ -45,10 +45,6 @@ module Bigrivercalc
         currency: currency,
         period: period
       )
-    end
-
-    def zero_amount?(amount_str)
-      amount_str.to_s.strip == "" || amount_str.to_f.zero?
     end
   end
 end

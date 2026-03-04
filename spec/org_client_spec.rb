@@ -19,6 +19,35 @@ RSpec.describe Bigrivercalc::OrgClient do
       .and_return(response)
   end
 
+  describe "#list_accounts" do
+    it "returns AccountInfo for active accounts under the given parent" do
+      page = double(accounts: [
+        double(id: "111111111111", name: "Account One", status: "ACTIVE"),
+        double(id: "222222222222", name: "Account Two", status: "ACTIVE")
+      ])
+      stub_pages("r-root1", page)
+
+      result = described_class.new.list_accounts("r-root1")
+
+      expect(result).to eq([
+        Bigrivercalc::AccountInfo.new(id: "111111111111", name: "Account One"),
+        Bigrivercalc::AccountInfo.new(id: "222222222222", name: "Account Two")
+      ])
+    end
+
+    it "filters out suspended accounts" do
+      page = double(accounts: [
+        double(id: "111111111111", name: "Active", status: "ACTIVE"),
+        double(id: "333333333333", name: "Suspended", status: "SUSPENDED")
+      ])
+      stub_pages("r-root1", page)
+
+      result = described_class.new.list_accounts("r-root1")
+
+      expect(result.map(&:id)).to eq(%w[111111111111])
+    end
+  end
+
   describe "#list_account_ids" do
     it "returns active account IDs for the given OU" do
       page = double(accounts: [

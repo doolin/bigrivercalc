@@ -34,8 +34,8 @@ RSpec.describe "Integration" do
   it "fetch_billing returns parsed line items from mocked AWS response" do
     line_items = Bigrivercalc.fetch_billing
 
-    expect(line_items.size).to eq(2)
-    expect(line_items.map(&:service)).to contain_exactly("Amazon EC2", "Amazon S3")
+    expect(line_items.size).to eq(3)
+    expect(line_items.map(&:service)).to contain_exactly("Amazon EC2", "Amazon S3", "NoSpend Service")
     expect(line_items.first.amount).to eq("12.50")
   end
 
@@ -59,13 +59,61 @@ RSpec.describe "Integration" do
         filter: { dimensions: { key: "LINKED_ACCOUNT", values: %w[111111111111 222222222222] } }
       )
     )
-    expect(line_items.size).to eq(2)
+    expect(line_items.size).to eq(3)
   end
 
   it "fetch_billing raises when both account_id and ou_id are given" do
     expect {
       Bigrivercalc.fetch_billing(account_id: "123456789012", ou_id: "ou-abc-12345")
     }.to raise_error(Bigrivercalc::Error, /Cannot specify both/)
+  end
+
+  it "fetch_billing_by_ou returns per-account results for all accounts in org" do
+    mock_org_client = instance_double(Aws::Organizations::Client)
+    allow(Aws::Organizations::Client).to receive(:new).and_return(mock_org_client)
+
+    # Stub root_id
+    allow(mock_org_client).to receive(:list_roots).and_return(
+      double(roots: [double(id: "r-root1")])
+    )
+
+    # Stub list_ous: one OU under root
+    ou_page = double(organizational_units: [double(id: "ou-test1", name: "davetest")])
+    ou_response = double("paginated_response")
+    allow(ou_response).to receive(:each_page).and_yield(ou_page)
+    allow(mock_org_client).to receive(:list_organizational_units_for_parent)
+      .with(parent_id: "r-root1")
+      .and_return(ou_response)
+
+    # Stub accounts in the OU
+    ou_acct_page = double(accounts: [
+      double(id: "111111111111", name: "davedev-account", status: "ACTIVE")
+    ])
+    ou_acct_response = double("paginated_response")
+    allow(ou_acct_response).to receive(:each_page).and_yield(ou_acct_page)
+    allow(mock_org_client).to receive(:list_accounts_for_parent)
+      .with(parent_id: "ou-test1")
+      .and_return(ou_acct_response)
+
+    # Stub accounts directly under root
+    root_acct_page = double(accounts: [
+      double(id: "222222222222", name: "daveqa-account", status: "ACTIVE"),
+      double(id: "333333333333", name: "Management Account", status: "ACTIVE")
+    ])
+    root_acct_response = double("paginated_response")
+    allow(root_acct_response).to receive(:each_page).and_yield(root_acct_page)
+    allow(mock_org_client).to receive(:list_accounts_for_parent)
+      .with(parent_id: "r-root1")
+      .and_return(root_acct_response)
+
+    results = Bigrivercalc.fetch_billing_by_ou
+
+    # Should have one entry per account
+    keys = results.keys.map(&:name)
+    expect(keys).to contain_exactly("davedev-account", "daveqa-account", "Management Account")
+
+    # Each account should have been queried individually
+    expect(mock_ce_client).to have_received(:get_cost_and_usage).exactly(3).times
   end
 
   it "fetch_billing raises when OU has no active accounts" do

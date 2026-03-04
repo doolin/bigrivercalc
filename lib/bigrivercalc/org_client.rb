@@ -4,6 +4,7 @@ require "aws-sdk-organizations"
 
 module Bigrivercalc
   OUInfo = Struct.new(:id, :name, keyword_init: true)
+  AccountInfo = Struct.new(:id, :name, keyword_init: true)
 
   class OrgClient
     ORGANIZATIONS_REGION = "us-east-1"
@@ -25,6 +26,17 @@ module Bigrivercalc
         end
       end
       ous
+    end
+
+    # Returns an array of AccountInfo for active accounts under the given parent.
+    def list_accounts(parent_id)
+      accounts = []
+      @client.list_accounts_for_parent(parent_id: parent_id).each_page do |page|
+        page.accounts.each do |account|
+          accounts << AccountInfo.new(id: account.id, name: account.name) if account.status == "ACTIVE"
+        end
+      end
+      accounts
     end
 
     # Returns an array of account ID strings for the given OU.

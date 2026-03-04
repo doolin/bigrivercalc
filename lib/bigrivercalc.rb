@@ -33,28 +33,31 @@ module Bigrivercalc
     BillingParser.new.parse(response)
   end
 
-  # Returns a hash of { OUInfo => [BillingLineItem, ...] } for each OU under the root.
-  # OUs with no billing data get an empty array.
+  # Returns a hash of { OUInfo => [BillingLineItem, ...] } for each account in the org.
+  # Accounts are discovered from all OUs under root plus accounts directly under root.
   def self.fetch_billing_by_ou(time_period: nil)
     org = OrgClient.new
     root = org.root_id
+
+    # Collect all accounts: from each OU and directly under root
+    all_accounts = []
     ous = org.list_ous(root)
-    raise Error, "No organizational units found under root" if ous.empty?
+    ous.each do |ou|
+      all_accounts.concat(org.list_accounts(ou.id))
+    end
+    all_accounts.concat(org.list_accounts(root))
+
+    raise Error, "No accounts found in organization" if all_accounts.empty?
 
     client = AwsClient.new
     parser = BillingParser.new
 
     results = {}
-    ous.each do |ou|
-      account_ids = org.list_account_ids(ou.id)
-      if account_ids.empty?
-        results[ou] = []
-        next
-      end
-
-      filter = { dimensions: { key: "LINKED_ACCOUNT", values: account_ids } }
+    all_accounts.each do |account|
+      entry = OUInfo.new(id: account.id, name: account.name)
+      filter = { dimensions: { key: "LINKED_ACCOUNT", values: [account.id] } }
       response = client.get_cost_and_usage(time_period: time_period, filter: filter)
-      results[ou] = parser.parse(response)
+      results[entry] = parser.parse(response)
     end
     results
   end

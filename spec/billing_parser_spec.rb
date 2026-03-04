@@ -30,17 +30,17 @@ RSpec.describe Bigrivercalc::BillingParser do
       )
     end
 
-    it "returns only non-zero line items" do
+    it "returns all line items including zero-cost" do
       items = parser.parse(response)
-      expect(items.map(&:service)).to contain_exactly("Amazon EC2", "Amazon S3")
+      expect(items.map(&:service)).to contain_exactly("Amazon EC2", "Amazon S3", "NoSpend Service")
     end
 
     it "sorts by amount descending" do
       items = parser.parse(response)
       expect(items.first.service).to eq("Amazon EC2")
       expect(items.first.amount).to eq("12.50")
-      expect(items.last.service).to eq("Amazon S3")
-      expect(items.last.amount).to eq("2.30")
+      expect(items.last.service).to eq("NoSpend Service")
+      expect(items.last.amount).to eq("0")
     end
 
     it "includes period, amount, and currency" do

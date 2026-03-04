@@ -30,7 +30,7 @@ def stub_response
 end
 
 def parse_args
-  options = { format: "markdown", stub: false, account: nil, ou: nil, all_ous: false, period: nil }
+  options = { format: "markdown", stub: false, account: nil, ou: nil, all_ous: true, period: nil }
   parser = OptionParser.new do |opts|
     opts.banner = "Usage: bigrivercalc [options]"
     opts.on("-f", "--format FORMAT", "Output format: markdown or terminal") { |v| options[:format] = v }
@@ -55,9 +55,9 @@ def run
 
   time_period = Bigrivercalc::PeriodParser.parse(options[:period]) if options[:period]
 
-  if options[:all_ous] && (options[:account] || options[:ou])
-    $stderr.puts "Error: --all-ous cannot be combined with --account or --ou"
-    exit 1
+  # --account or --ou disables the default all-accounts behavior
+  if options[:account] || options[:ou]
+    options[:all_ous] = false
   end
 
   if options[:all_ous] && stub
