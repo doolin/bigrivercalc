@@ -6,8 +6,10 @@ module Bigrivercalc
   OUInfo = Struct.new(:id, :name, keyword_init: true)
 
   class OrgClient
-    def initialize
-      @client = Aws::Organizations::Client.new
+    ORGANIZATIONS_REGION = "us-east-1"
+
+    def initialize(region: ORGANIZATIONS_REGION)
+      @client = Aws::Organizations::Client.new(region: region)
     end
 
     def root_id
